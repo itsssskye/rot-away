@@ -11,7 +11,9 @@ struct ContentView: View {
     @ObservedObject var trashManager: TrashManager
     @State private var hasPermission: Bool = false
     
-    // Quick preset options the user can click
+    // Tracks if this is the user's very first time opening the app
+    @AppStorage("isFirstLaunch") private var isFirstLaunch: Bool = true
+    
     let unitOptions = ["seconds", "minutes", "days"]
 
     var body: some View {
@@ -27,15 +29,15 @@ struct ContentView: View {
             
             Divider()
             
-            if !hasPermission {
-                // ONBOARDING SCREEN (Missing Permissions)
+            // Show onboarding ONLY if it's the first launch AND we don't have permission yet
+            if isFirstLaunch && !hasPermission {
                 VStack(spacing: 10) {
-                    Text("🔒 Permission Required")
+                    Text("🔒 Welcome to RotAway")
                         .font(.subheadline)
                         .fontWeight(.bold)
                         .foregroundColor(.orange)
                     
-                    Text("RotAway needs Full Disk Access to scan and safely delete files from your system Trash.")
+                    Text("RotAway needs Full Disk Access to scan and safely delete files from your system Trash folder.")
                         .font(.caption)
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
@@ -45,29 +47,30 @@ struct ContentView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     
-                    Button("Check Again") {
+                    Button("I've Granted It - Start App") {
                         checkPermissions()
+                        // If they successfully gave access, turn off the first-launch screen forever
+                        if hasPermission {
+                            isFirstLaunch = false
+                        }
                     }
                     .font(.caption)
-                    .buttonStyle(.borderless)
+                    .buttonStyle(.bordered)
                 }
                 .padding(.vertical, 5)
             } else {
-                // NORMAL MAIN INTERFACE
+                // NORMAL UTILITY INTERFACE (Hidden after setup)
                 VStack(spacing: 12) {
                     Text("Delete items older than:")
                         .font(.subheadline)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    // Custom Input Row (Type or Pick)
                     HStack(spacing: 8) {
-                        // Number input text field
                         TextField("Amount", value: $trashManager.timeValue, formatter: NumberFormatter())
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 70)
                             .multilineTextAlignment(.center)
                         
-                        // Unit dropdown picker (Seconds, Minutes, Days)
                         Picker("", selection: $trashManager.timeUnit) {
                             ForEach(unitOptions, id: \.self) { unit in
                                 Text(unit).tag(unit)
@@ -77,7 +80,6 @@ struct ContentView: View {
                         .labelsHidden()
                     }
                     
-                    // Safety warning if user sets it below 5 seconds
                     if trashManager.timeUnit == "seconds" && trashManager.timeValue < 5 {
                         Text("⚠️ Minimum limit is 5 seconds")
                             .font(.caption)
@@ -86,7 +88,6 @@ struct ContentView: View {
                     
                     Divider()
                     
-                    // Action Buttons
                     HStack(spacing: 10) {
                         Button("Clean Now") {
                             trashManager.checkAndEmptyTrash()
@@ -102,21 +103,24 @@ struct ContentView: View {
             }
         }
         .padding()
-        .frame(width: 260, height: !hasPermission ? 220 : 190)
+        .frame(width: 260, height: (isFirstLaunch && !hasPermission) ? 220 : 190)
         .onAppear {
             checkPermissions()
+            // If they already have permission from a previous session, bypass onboarding completely
+            if hasPermission {
+                isFirstLaunch = false
+            }
         }
     }
     
-    // Function to test if the app has Full Disk Access
     func checkPermissions() {
         let fileManager = FileManager.default
         if let trashURL = fileManager.urls(for: .trashDirectory, in: .userDomainMask).first {
             do {
                 _ = try fileManager.contentsOfDirectory(at: trashURL, includingPropertiesForKeys: nil, options: [])
-                hasPermission = true // Success! We have access.
+                hasPermission = true
             } catch {
-                hasPermission = false // Failed, system blocked the app :(
+                hasPermission = false
             }
         }
     }
@@ -130,7 +134,6 @@ struct ContentView_Previews: PreviewProvider {
 
 extension ContentView {
     func openFullDiskAccessSettings() {
-        // The deep link that tells macOS to open Privacy -> Full Disk Access directly
         let urlString = "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
         if let url = URL(string: urlString) {
             NSWorkspace.shared.open(url)

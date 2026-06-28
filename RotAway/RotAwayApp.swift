@@ -18,6 +18,11 @@ struct RotAwayApp: App {
             ContentView(trashManager: trashManager)
         }
         .menuBarExtraStyle(.window)
+        
+        MenuBarExtra("RotAway", image: "AppIcon") {
+            ContentView(trashManager: trashManager)
+        }
+        .menuBarExtraStyle(.window)
     }
 }
 
