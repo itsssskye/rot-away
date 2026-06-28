@@ -19,7 +19,7 @@ RotAway lives silently in your system menu bar and ensures your digital waste bi
 
 Because RotAway securely deletes files globally from your system Trash directory, macOS requires a quick one-time permission clearance during its first launch:
 
-1. Head over to the [**latest release**](https://github.com/itsssskye/rot-away/releases/tag/v1.0.0) page and download the `RotAway.zip` file.
+1. Head over to the [**Releases**](https://github.com/itsssskye/rot-away/releases) tab and download the latest `RotAway.zip` file that supports your MacOS version.
 2. Unzip the file and drag `RotAway` into your **Applications** folder.
 3. Double-click `RotAway` to open the app. 
 4. Go to your menu bar to access the welcome screen.
